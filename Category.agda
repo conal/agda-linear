@@ -168,16 +168,17 @@ instance
   →-Symmetric× : Symmetric Fun _×→_
   →-Symmetric× = record { swap∘swap = refl }
 
+-- TODO:
+-- 
 -- instance
 --   →-Symmetric⊎ : Symmetric Fun _⊎→_
---   →-Symmetric⊎ = record {
---       swap∘swap = λ { A B : Set } →
---         begin
---           swap ∘ swap
---         ≡⟨⟩
---           ?
---         ∎
---       }
+--   →-Symmetric⊎ = {!!}
+
+record Biproduct (_↝_ : Arr u) (_◇_ : Bop u) : Set where
+  field
+    ⦃ _↝_Cartesian ⦄ : Cartesian _↝_ _◇_
+    ⦃ _↝_Cocartesian ⦄ : Cocartesian _↝_ _◇_
+open Biproduct ⦃ … ⦄ public
 
 record Closed _↝_ (_⇒_ : Bop u) : Set where
   field
@@ -214,26 +215,4 @@ instance
     apply = λ { (f , x) → f x }
     -- apply = applyViaUncurry
     }
-
-record Numeric (_↝_ : Arr u) _×_ (A : u) : Set where
-  field
-    ⦃ cart ⦄ : Cartesian _↝_ _×_
-    _+c_ _*c_ _-c_ : (A × A) ↝ A
-    negate-c : A ↝ A
-open Numeric ⦃ … ⦄ public
-
-record Num (A : Set) : Set where
-  field
-    _+_ _*_ _-_ : A → A → A
-    negate : A → A
-    fromℕ : ℕ → A
-open Num ⦃ … ⦄ public
-
-instance
-  →-Numeric : ⦃ _ : Num A ⦄ → Numeric Fun _×→_ A
-  →-Numeric = record {
-      _+c_ = uncurry _+_
-    ; _*c_ = uncurry _*_
-    ; _-c_ = uncurry _-_
-    ; negate-c = negate
-    }
+     
