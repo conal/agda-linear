@@ -80,6 +80,8 @@ record Cartesian _↝_ (_×_ : Bop u) : Set where
     dup : A ↝ (A × A)
 open Cartesian ⦃ … ⦄ public
 
+-- TODO: Cartesian laws
+
 infixr 3 _△_
 _△_ : ⦃ _ : Cartesian _↝_ _×_ ⦄ → (A ↝ C) → (A ↝ D) → (A ↝ (C × D))
 f △ g = (f ⊙ g) ∘ dup
@@ -111,49 +113,49 @@ instance
     jam = λ { (inj₁ a) → a ; (inj₂ a) → a }
    }
 
-record AssociativeCat (_↝_ : Arr u) _◇_ : Set where
+record Associative (_↝_ : Arr u) _◇_ : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     rassoc : ((A ◇ B) ◇ C) ↝ (A ◇ (B ◇ C))
     lassoc : (A ◇ (B ◇ C)) ↝ ((A ◇ B) ◇ C)
-open AssociativeCat ⦃ … ⦄ public
+open Associative ⦃ … ⦄ public
 
-AssocViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → AssociativeCat _↝_ _×_
+AssocViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → Associative _↝_ _×_
 AssocViaCart = record {
   lassoc = second exl △ exr ∘ exr ;
   rassoc = exl ∘ exl △ first exr }
 
 instance
-  →-AssociativeCat× : AssociativeCat Fun _×→_
+  →-AssociativeCat× : Associative Fun _×→_
   →-AssociativeCat× = AssocViaCart
 
-AssocViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → AssociativeCat _↝_ _⊎_
+AssocViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Associative _↝_ _⊎_
 AssocViaCocart = record {
   lassoc = inl ∘ inl ▽ (inl ∘ inr ▽ inr) ;
   rassoc = (inl ▽ inr ∘ inl) ▽ inr ∘ inr }
 
 instance
-  →-AssociativeCat⊎ : AssociativeCat Fun _⊎→_
+  →-AssociativeCat⊎ : Associative Fun _⊎→_
   →-AssociativeCat⊎ = AssocViaCocart
 
-record BraidedCat (_↝_ : Arr u) _◇_ : Set where
+record Braided (_↝_ : Arr u) _◇_ : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     swap : (A ◇ B) ↝ (B ◇ A)
-open BraidedCat ⦃ … ⦄ public
+open Braided ⦃ … ⦄ public
 
-BraidedViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → BraidedCat _↝_ _×_
+BraidedViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → Braided _↝_ _×_
 BraidedViaCart = record { swap = exr △ exl }
 
-BraidedViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → BraidedCat _↝_ _⊎_
+BraidedViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Braided _↝_ _⊎_
 BraidedViaCocart = record { swap = inr ▽ inl }
 
 instance
-  →-BraidedCat× : BraidedCat Fun _×→_
+  →-BraidedCat× : Braided Fun _×→_
   →-BraidedCat× = BraidedViaCart
 
 instance
-  →-BraidedCat⊎ : BraidedCat Fun _⊎→_
+  →-BraidedCat⊎ : Braided Fun _⊎→_
   →-BraidedCat⊎ = BraidedViaCocart
 
 record Closed _↝_ (_⇒_ : Bop u) : Set where
@@ -192,12 +194,12 @@ instance
     -- apply = applyViaUncurry
     }
 
-record NumCat (_↝_ : Arr u) _×_ (A : u) : Set where
+record Numeric (_↝_ : Arr u) _×_ (A : u) : Set where
   field
     ⦃ cart ⦄ : Cartesian _↝_ _×_
     _+c_ _*c_ _-c_ : (A × A) ↝ A
     negate-c : A ↝ A
-open NumCat ⦃ … ⦄ public
+open Numeric ⦃ … ⦄ public
 
 record Num (A : Set) : Set where
   field
@@ -207,8 +209,8 @@ record Num (A : Set) : Set where
 open Num ⦃ … ⦄ public
 
 instance
-  →-NumCat : ⦃ _ : Num A ⦄ → NumCat Fun _×→_ A
-  →-NumCat = record {
+  →-Numeric : ⦃ _ : Num A ⦄ → Numeric Fun _×→_ A
+  →-Numeric = record {
       _+c_ = uncurry _+_
     ; _*c_ = uncurry _*_
     ; _-c_ = uncurry _-_
