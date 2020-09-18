@@ -240,3 +240,33 @@ instance
     assoc = λ { {a} {b} {c} → +-assoc {a} {b} {c} }
     }
          
+record CommutativeMonoid { A : Set } (∅ : A) (_∪_ : A → A → A) : Set where
+  field
+    ⦃ _Monoid ⦄ : Monoid ∅ _∪_
+    .comm : ∀ {a b : A} → (a ∪ b) ≡ (b ∪ a)
+open CommutativeMonoid ⦃ … ⦄ public
+
++-suc : ∀ {m n : ℕ} → m +ℕ suc n ≡ suc (m +ℕ n)
++-suc {zero} {n} = refl
++-suc {suc m} {n} rewrite +-suc {m} {n} = refl
+
++-comm : ∀ { m n : ℕ } → m +ℕ n ≡ n +ℕ m
++-comm {m} {zero }  = +zero {m}
++-comm {m} {suc n} rewrite +-suc {m} {n} | +-comm {n} {m} = refl
+
+instance
+  CommutativeMonoidℕ : CommutativeMonoid zero _+ℕ_
+  CommutativeMonoidℕ = record {
+    comm = λ { {a} {b} → +-comm {a} {b} } }
+
+record Semiring { A : Set } : Set where
+  field
+    𝟎 𝟏 : A
+    _+_ _*_ : A → A → A
+    ⦃ _add ⦄ : CommutativeMonoid 𝟎 _+_
+    ⦃ _mul ⦄ : Monoid 𝟏 _*_
+    .distrib-l : {a b c : A} → a * (b + c) ≡ (a * b) + (a * c)
+    .distrib-r : {a b c : A} → (a + b) * c ≡ (a * c) + (b * c)
+    .annihilate-l : {a : A} → 𝟎 * a ≡ 𝟎
+    .annihilate-r : {a : A} → a * 𝟎 ≡ 𝟎
+open Semiring ⦃ … ⦄ public
