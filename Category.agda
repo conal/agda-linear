@@ -172,11 +172,23 @@ record ClosedCartesian _↝_ _×_ (_⇒_ : Bop u) : Set where
     ⦃ cart ⦄ : Cartesian _↝_ _×_
     curry : ((A × B) ↝ C) → (A ↝ (B ⇒ C))
     uncurry : (A ↝ (B ⇒ C)) → ((A × B) ↝ C)
+    apply : ((A ⇒ B) × A) ↝ B
 open ClosedCartesian ⦃ … ⦄ public
+
+-- applyViaUncurry : ⦃ ClosedCartesian _↝_ _×_ _⇒_ ⦄ → ((A ⇒ B) × A) ↝ B
+-- applyViaUncurry = uncurry id
+
+-- Fails to resolve id, because there are paths via Closed.cat and Monoidal.cat.
+-- How can I ensure that they're the same?
 
 instance
   →-ClosedCartesian : ClosedCartesian Fun _×→_ Fun
-  →-ClosedCartesian = record { curry = curry→ ; uncurry = uncurry→ }
+  →-ClosedCartesian = record {
+    curry = curry→ ;
+    uncurry = uncurry→ ;
+    apply = λ { (f , x) → f x }
+    -- apply = applyViaUncurry
+    }
 
 record NumCat (_↝_ : Arr u) _×_ (A : u) : Set where
   field
