@@ -18,10 +18,7 @@ private
    u : Set
    A B C D U V Z : u
    _↝_ : u → u → Set
-   _×_ : u → u → u
-   _⇒_ : u → u → u
-   _⊎_ : u → u → u
-   _◇_ : u → u → u
+   _◇_ _×_ _⊎_ _⇒_ : u → u → u
 
 record Category (_↝_ : u → u → Set) : Set where
   infixr 5 _∘_
