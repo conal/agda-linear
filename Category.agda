@@ -166,24 +166,26 @@ instance
   →-Closed : Closed Fun Fun
   →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
 
-record ClosedCartesian _↝_ _×_ (_⇒_ : Bop u) : Set where
+record CartesianClosed _↝_ _×_ (_⇒_ : Bop u) : Set where
   field
     ⦃ closed ⦄ : Closed _↝_ _⇒_
     ⦃ cart ⦄ : Cartesian _↝_ _×_
     curry : ((A × B) ↝ C) → (A ↝ (B ⇒ C))
     uncurry : (A ↝ (B ⇒ C)) → ((A × B) ↝ C)
     apply : ((A ⇒ B) × A) ↝ B
-open ClosedCartesian ⦃ … ⦄ public
+open CartesianClosed ⦃ … ⦄ public
 
--- applyViaUncurry : ⦃ ClosedCartesian _↝_ _×_ _⇒_ ⦄ → ((A ⇒ B) × A) ↝ B
+-- applyViaUncurry : ⦃ CartesianClosed _↝_ _×_ _⇒_ ⦄ → ((A ⇒ B) × A) ↝ B
 -- applyViaUncurry = uncurry id
 
 -- Fails to resolve id, because there are paths via Closed.cat and Monoidal.cat.
 -- How can I ensure that they're the same?
 
+-- TODO: decide whether to keep apply.
+
 instance
-  →-ClosedCartesian : ClosedCartesian Fun _×→_ Fun
-  →-ClosedCartesian = record {
+  →-CartesianClosed : CartesianClosed Fun _×→_ Fun
+  →-CartesianClosed = record {
     curry = curry→ ;
     uncurry = uncurry→ ;
     apply = λ { (f , x) → f x }
