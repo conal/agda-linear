@@ -126,8 +126,8 @@ AssocViaCart = record {
   rassoc = exl ∘ exl △ first exr }
 
 instance
-  →-AssociativeCat× : Associative Fun _×→_
-  →-AssociativeCat× = AssocViaCart
+  →-Associative× : Associative Fun _×→_
+  →-Associative× = AssocViaCart
 
 AssocViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Associative _↝_ _⊎_
 AssocViaCocart = record {
@@ -135,13 +135,13 @@ AssocViaCocart = record {
   rassoc = (inl ▽ inr ∘ inl) ▽ inr ∘ inr }
 
 instance
-  →-AssociativeCat⊎ : Associative Fun _⊎→_
-  →-AssociativeCat⊎ = AssocViaCocart
+  →-Associative⊎ : Associative Fun _⊎→_
+  →-Associative⊎ = AssocViaCocart
 
 record Braided (_↝_ : Arr u) _◇_ : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
-    swap : (A ◇ B) ↝ (B ◇ A)
+    swap : {A B : u} → (A ◇ B) ↝ (B ◇ A)
 open Braided ⦃ … ⦄ public
 
 BraidedViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → Braided _↝_ _×_
@@ -151,12 +151,12 @@ BraidedViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Braided _↝_ _⊎_
 BraidedViaCocart = record { swap = inr ▽ inl }
 
 instance
-  →-BraidedCat× : Braided Fun _×→_
-  →-BraidedCat× = BraidedViaCart
+  →-Braided× : Braided Fun _×→_
+  →-Braided× = BraidedViaCart
 
 instance
-  →-BraidedCat⊎ : Braided Fun _⊎→_
-  →-BraidedCat⊎ = BraidedViaCocart
+  →-Braided⊎ : Braided Fun _⊎→_
+  →-Braided⊎ = BraidedViaCocart
 
 record Closed _↝_ (_⇒_ : Bop u) : Set where
   field
