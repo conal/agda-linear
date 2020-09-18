@@ -210,9 +210,39 @@ open CartesianClosed ⦃ … ⦄ public
 instance
   →-CartesianClosed : CartesianClosed Fun _×→_ Fun
   →-CartesianClosed = record {
-    curry = curry→ ;
-    uncurry = uncurry→ ;
-    apply = λ { (f , x) → f x }
-    -- apply = applyViaUncurry
-    }
+      curry = curry→ ;
+      uncurry = uncurry→ ;
+      apply = λ { (f , x) → f x }
+      -- apply = applyViaUncurry
+      }
      
+record Additive (A : Set) : Set where
+  infixl 6 _+_
+  field
+    𝟎 : A
+    _+_ : A → A → A
+    .id-l  : ∀ {a : A} → 𝟎 + a ≡ a
+    .id-r  : ∀ {a : A} → a + 𝟎 ≡ a
+    .assoc : ∀ {a b c : A} → (a + b) + c ≡ a + (b + c)
+open Additive ⦃ … ⦄ public
+
++zero : ∀ {m : ℕ} → m +ℕ 0 ≡ m
++zero {zero} = refl
++zero {suc m} rewrite (+zero {m}) = refl
+{-# REWRITE +zero #-}
+
++-assoc : ∀ { m n p : ℕ } → (m +ℕ n) +ℕ p ≡ m +ℕ (n +ℕ p)
+
++-assoc {zero } {n} {p} = refl
++-assoc {suc m} {n} {p} rewrite +-assoc {m} {n} {p} = refl
+
+instance
+  Additiveℕ : Additive ℕ
+  Additiveℕ = record {
+    𝟎 = zero ;
+    _+_ = _+ℕ_ ;
+    id-l = refl ;
+    id-r = refl ;
+    assoc = λ { {a} {b} {c} → +-assoc {a} {b} {c} }
+    }
+         
