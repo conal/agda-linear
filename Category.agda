@@ -154,7 +154,7 @@ instance
 
 instance
   →-BraidedCat⊎ : BraidedCat Fun _⊎→_
-  →-BraidedCat⊎ = record { swap = inr ▽ inl }
+  →-BraidedCat⊎ = BraidedViaCocart
 
 record Closed _↝_ (_⇒_ : Bop u) : Set where
   field
