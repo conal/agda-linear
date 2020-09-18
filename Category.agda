@@ -178,7 +178,7 @@ instance
   →-ClosedCartesian : ClosedCartesian Fun _×→_ Fun
   →-ClosedCartesian = record { curry = curry→ ; uncurry = uncurry→ }
 
-record NumCat (_↝_ : Arr u) (A : u) : Set where
+record NumCat (_↝_ : Arr u) _×_ (A : u) : Set where
   field
     ⦃ cart ⦄ : Cartesian _↝_ _×_
     _+c_ _*c_ _-c_ : (A × A) ↝ A
@@ -192,14 +192,11 @@ record Num (A : Set) : Set where
     fromℕ : ℕ → A
 open Num ⦃ … ⦄ public
 
--- instance
---   →-NumCat : ⦃ _ : Num A ⦄ → NumCat Fun A
---   →-NumCat = record {
---       _+c_ = uncurry _+_
---     ; _*c_ = uncurry _*_
---     ; _-c_ = uncurry _-_
---     ; negate-c = negate
---     }
-
--- No instance of type Cartesian (λ A B → A → B) _×_ was found in
--- scope.
+instance
+  →-NumCat : ⦃ _ : Num A ⦄ → NumCat Fun _×→_ A
+  →-NumCat = record {
+      _+c_ = uncurry _+_
+    ; _*c_ = uncurry _*_
+    ; _-c_ = uncurry _-_
+    ; negate-c = negate
+    }
