@@ -13,14 +13,20 @@ open import Relation.Binary.PropositionalEquality as PE hiding ([_])
 open PE.≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite
 
+Arr : Set → Set
+Arr u = u → u → Set
+
+Bop : Set → Set
+Bop u = u → u → u
+
 private
   variable
    u : Set
    A B C D U V Z : u
    _↝_ : u → u → Set
-   _◇_ _×_ _⊎_ _⇒_ : u → u → u
+   _◇_ _×_ _⊎_ _⇒_ : Bop u
 
-record Category (_↝_ : u → u → Set) : Set where
+record Category (_↝_ : Arr u) : Set where
   infixr 5 _∘_
   field
     id   : A ↝ A
@@ -42,7 +48,7 @@ instance
     id-r = refl ;
     assoc = refl }
 
-record Monoidal _↝_ (_◇_ : u → u → u) : Set where
+record Monoidal _↝_ (_◇_ : Bop u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
     _⊙_ : (A ↝ C) → (B ↝ D) → ((A ◇ B) ↝ (C ◇ D))
@@ -66,7 +72,7 @@ instance
   →-Monoidal⊎ = record {
     _⊙_ = λ { f g → (λ { (inj₁ a) → inj₁ (f a) ; (inj₂ b) → inj₂ (g b) }) } }
 
-record Cartesian _↝_ (_×_ : u → u → u) : Set where
+record Cartesian _↝_ (_×_ : Bop u) : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _×_
     exl : (A × B) ↝ A
@@ -85,7 +91,7 @@ instance
     exr = proj₂ ;
     dup = λ a → (a , a) }
 
-record Cocartesian _↝_ (_⊎_ : u → u → u) : Set where
+record Cocartesian _↝_ (_⊎_ : Bop u) : Set where
   field
     ⦃ _↝_ComonoidalP ⦄ : Monoidal _↝_ _⊎_
     inl : A ↝ (A ⊎ B)
@@ -105,7 +111,7 @@ instance
     jam = λ { (inj₁ a) → a ; (inj₂ a) → a }
    }
 
-record AssociativeCat (_↝_ : u → u → Set) _◇_ : Set where
+record AssociativeCat (_↝_ : Arr u) _◇_ : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     rassoc : ((A ◇ B) ◇ C) ↝ (A ◇ (B ◇ C))
@@ -130,7 +136,7 @@ instance
   →-AssociativeCat⊎ : AssociativeCat Fun _⊎→_
   →-AssociativeCat⊎ = AssocViaCocart
 
-record BraidedCat (_↝_ : u → u → Set) _◇_ : Set where
+record BraidedCat (_↝_ : Arr u) _◇_ : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     swap : (A ◇ B) ↝ (B ◇ A)
@@ -150,7 +156,7 @@ instance
   →-BraidedCat⊎ : BraidedCat Fun _⊎→_
   →-BraidedCat⊎ = record { swap = inr ▽ inl }
 
-record Closed _↝_ (_⇒_ : u → u → u) : Set where
+record Closed _↝_ (_⇒_ : Bop u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
     _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇒ C) ↝ (A ⇒ D))
@@ -160,7 +166,7 @@ instance
   →-Closed : Closed Fun Fun
   →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
 
-record ClosedCartesian _↝_ _×_ (_⇒_ : u → u → u) : Set where
+record ClosedCartesian _↝_ _×_ (_⇒_ : Bop u) : Set where
   field
     ⦃ closed ⦄ : Closed _↝_ _⇒_
     ⦃ cart ⦄ : Cartesian _↝_ _×_
@@ -172,7 +178,7 @@ instance
   →-ClosedCartesian : ClosedCartesian Fun _×→_ Fun
   →-ClosedCartesian = record { curry = curry→ ; uncurry = uncurry→ }
 
-record NumCat (_↝_ : u → u → Set) (A : u) : Set where
+record NumCat (_↝_ : Arr u) (A : u) : Set where
   field
     ⦃ cart ⦄ : Cartesian _↝_ _×_
     _+c_ _*c_ _-c_ : (A × A) ↝ A
