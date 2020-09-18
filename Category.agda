@@ -158,6 +158,27 @@ instance
   →-Braided⊎ : Braided Fun _⊎→_
   →-Braided⊎ = BraidedViaCocart
 
+record Symmetric (_↝_ : Arr u) (_◇_ : Bop u) : Set where
+  field
+    ⦃ _↝_Braided ⦄ : Braided _↝_ _◇_
+    swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≡ id
+open Symmetric ⦃ … ⦄ public
+
+instance
+  →-Symmetric× : Symmetric Fun _×→_
+  →-Symmetric× = record { swap∘swap = refl }
+
+-- instance
+--   →-Symmetric⊎ : Symmetric Fun _⊎→_
+--   →-Symmetric⊎ = record {
+--       swap∘swap = λ { A B : Set } →
+--         begin
+--           swap ∘ swap
+--         ≡⟨⟩
+--           ?
+--         ∎
+--       }
+
 record Closed _↝_ (_⇒_ : Bop u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
