@@ -1,5 +1,7 @@
 {-# OPTIONS --type-in-type --rewriting #-}
 
+open import Relation.Binary using (Rel)
+
 module Category where
 
 open import Algebra using (Op₂)
@@ -15,6 +17,7 @@ open import Algebra.Definitions using (_DistributesOverˡ_; _DistributesOverʳ_)
 open import Relation.Binary.PropositionalEquality as PE hiding ([_])
 open PE.≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite
+open import Level
 
 -- TODO: add levels, and remove --type-in-type.
 
@@ -30,13 +33,15 @@ private
    _◇_ _×_ _⊎_ _⇨_ : Op₂ u
 
 record Category (_↝_ : Arr u) : Set where
-  infixr 5 _∘_
+  infix 4 _≈_
+  infixr 9 _∘_
   field
+    _≈_  : ∀ {A B : u} → Rel (A ↝ B) 0ℓ
     id   : A ↝ A
     _∘_  : (B ↝ C) → (A ↝ B) → (A ↝ C)
-    .idˡ  : ∀ {f : A ↝ B} → id ∘ f ≡ f
-    .idʳ  : ∀ {f : A ↝ B} → f ∘ id ≡ f
-    .assoc : ∀ {h : C ↝ D} {g : B ↝ C} {f : A ↝ B} → (h ∘ g) ∘ f ≡ h ∘ (g ∘ f)
+    .idˡ  : ∀ {f : A ↝ B} → id ∘ f ≈ f
+    .idʳ  : ∀ {f : A ↝ B} → f ∘ id ≈ f
+    .assoc : ∀ {h : C ↝ D} {g : B ↝ C} {f : A ↝ B} → (h ∘ g) ∘ f ≈ h ∘ (g ∘ f)
 open Category ⦃ … ⦄ public
 
 Fun : Set → Set → Set
@@ -45,6 +50,7 @@ Fun = λ (A B : Set) → A → B
 instance
   →-Category : Category Fun
   →-Category = record {
+    _≈_ = _≡_ ;
     id = id→ ;
     _∘_ = _∘′_ ;
     idˡ = refl ;
@@ -164,7 +170,7 @@ instance
 record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
   field
     ⦃ _↝_Braided ⦄ : Braided _↝_ _◇_
-    swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≡ id
+    swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≈ id
 open Symmetric ⦃ … ⦄ public
 
 instance
