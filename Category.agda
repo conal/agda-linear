@@ -27,7 +27,7 @@ private
    u : Set
    A B C D U V Z : u
    _↝_ : u → u → Set
-   _◇_ _×_ _⊎_ _⇒_ : Op₂ u
+   _◇_ _×_ _⊎_ _⇨_ : Op₂ u
 
 record Category (_↝_ : Arr u) : Set where
   infixr 5 _∘_
@@ -185,26 +185,26 @@ record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
     ⦃ _↝_Cocartesian ⦄ : Cocartesian _↝_ _◇_
 open Biproduct ⦃ … ⦄ public
 
-record Closed _↝_ (_⇒_ : Op₂ u) : Set where
+record Closed _↝_ (_⇨_ : Op₂ u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
-    _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇒ C) ↝ (A ⇒ D))
+    _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇨ C) ↝ (A ⇨ D))
 open Closed ⦃ … ⦄ public
 
 instance
   →-Closed : Closed Fun Fun
   →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
 
-record CartesianClosed _↝_ _×_ (_⇒_ : Op₂ u) : Set where
+record CartesianClosed _↝_ _×_ (_⇨_ : Op₂ u) : Set where
   field
-    ⦃ closed ⦄ : Closed _↝_ _⇒_
+    ⦃ closed ⦄ : Closed _↝_ _⇨_
     ⦃ cart ⦄ : Cartesian _↝_ _×_
-    curry : ((A × B) ↝ C) → (A ↝ (B ⇒ C))
-    uncurry : (A ↝ (B ⇒ C)) → ((A × B) ↝ C)
-    apply : ((A ⇒ B) × A) ↝ B
+    curry : ((A × B) ↝ C) → (A ↝ (B ⇨ C))
+    uncurry : (A ↝ (B ⇨ C)) → ((A × B) ↝ C)
+    apply : ((A ⇨ B) × A) ↝ B
 open CartesianClosed ⦃ … ⦄ public
 
--- applyViaUncurry : ⦃ CartesianClosed _↝_ _×_ _⇒_ ⦄ → ((A ⇒ B) × A) ↝ B
+-- applyViaUncurry : ⦃ CartesianClosed _↝_ _×_ _⇨_ ⦄ → ((A ⇨ B) × A) ↝ B
 -- applyViaUncurry = uncurry id
 
 -- Fails to resolve id, because there are paths via Closed.cat and Monoidal.cat.
