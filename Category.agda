@@ -2,37 +2,40 @@
 
 module Category where
 
+open import Algebra using (Op₂)
 open import Data.Product renaming
       (swap to swap×; _×_ to _×→_; curry to curry→; uncurry to uncurry→)
 open import Data.Sum renaming (swap to swap⊎; _⊎_ to _⊎→_)
 open import Data.Unit
 open import Function renaming (_∘_ to _∘→_; id to id→)
 open import Data.Nat renaming (_+_ to _+ℕ_; _*_ to _*ℕ_)
+open import Data.Nat.Properties
+open import Algebra.Definitions using (_DistributesOverˡ_; _DistributesOverʳ_)
 
 open import Relation.Binary.PropositionalEquality as PE hiding ([_])
 open PE.≡-Reasoning
 open import Agda.Builtin.Equality.Rewrite
 
+-- TODO: add levels, and remove --type-in-type.
+
+-- Probably defined somewhere in the standard library. Maybe Rel (with level)
 Arr : Set → Set
 Arr u = u → u → Set
-
-Bop : Set → Set
-Bop u = u → u → u
 
 private
   variable
    u : Set
    A B C D U V Z : u
    _↝_ : u → u → Set
-   _◇_ _×_ _⊎_ _⇒_ : Bop u
+   _◇_ _×_ _⊎_ _⇒_ : Op₂ u
 
 record Category (_↝_ : Arr u) : Set where
   infixr 5 _∘_
   field
     id   : A ↝ A
     _∘_  : (B ↝ C) → (A ↝ B) → (A ↝ C)
-    .id-l  : ∀ {f : A ↝ B} → id ∘ f ≡ f
-    .id-r  : ∀ {f : A ↝ B} → f ∘ id ≡ f
+    .idˡ  : ∀ {f : A ↝ B} → id ∘ f ≡ f
+    .idʳ  : ∀ {f : A ↝ B} → f ∘ id ≡ f
     .assoc : ∀ {h : C ↝ D} {g : B ↝ C} {f : A ↝ B} → (h ∘ g) ∘ f ≡ h ∘ (g ∘ f)
 open Category ⦃ … ⦄ public
 
@@ -44,11 +47,11 @@ instance
   →-Category = record {
     id = id→ ;
     _∘_ = _∘′_ ;
-    id-l = refl ;
-    id-r = refl ;
+    idˡ = refl ;
+    idʳ = refl ;
     assoc = refl }
 
-record Monoidal _↝_ (_◇_ : Bop u) : Set where
+record Monoidal _↝_ (_◇_ : Op₂ u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
     _⊙_ : (A ↝ C) → (B ↝ D) → ((A ◇ B) ↝ (C ◇ D))
@@ -72,7 +75,7 @@ instance
   →-Monoidal⊎ = record {
     _⊙_ = λ { f g → (λ { (inj₁ a) → inj₁ (f a) ; (inj₂ b) → inj₂ (g b) }) } }
 
-record Cartesian _↝_ (_×_ : Bop u) : Set where
+record Cartesian _↝_ (_×_ : Op₂ u) : Set where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _×_
     exl : (A × B) ↝ A
@@ -93,7 +96,7 @@ instance
     exr = proj₂ ;
     dup = λ a → (a , a) }
 
-record Cocartesian _↝_ (_⊎_ : Bop u) : Set where
+record Cocartesian _↝_ (_⊎_ : Op₂ u) : Set where
   field
     ⦃ _↝_ComonoidalP ⦄ : Monoidal _↝_ _⊎_
     inl : A ↝ (A ⊎ B)
@@ -158,7 +161,7 @@ instance
   →-Braided⊎ : Braided Fun _⊎→_
   →-Braided⊎ = BraidedViaCocart
 
-record Symmetric (_↝_ : Arr u) (_◇_ : Bop u) : Set where
+record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
   field
     ⦃ _↝_Braided ⦄ : Braided _↝_ _◇_
     swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≡ id
@@ -174,13 +177,15 @@ instance
 --   →-Symmetric⊎ : Symmetric Fun _⊎→_
 --   →-Symmetric⊎ = {!!}
 
-record Biproduct (_↝_ : Arr u) (_◇_ : Bop u) : Set where
+-- Use swap-involutive from the standard library from Data.Sum.Properties
+
+record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
   field
     ⦃ _↝_Cartesian ⦄ : Cartesian _↝_ _◇_
     ⦃ _↝_Cocartesian ⦄ : Cocartesian _↝_ _◇_
 open Biproduct ⦃ … ⦄ public
 
-record Closed _↝_ (_⇒_ : Bop u) : Set where
+record Closed _↝_ (_⇒_ : Op₂ u) : Set where
   field
     ⦃ cat ⦄ : Category _↝_
     _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇒ C) ↝ (A ⇒ D))
@@ -190,7 +195,7 @@ instance
   →-Closed : Closed Fun Fun
   →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
 
-record CartesianClosed _↝_ _×_ (_⇒_ : Bop u) : Set where
+record CartesianClosed _↝_ _×_ (_⇒_ : Op₂ u) : Set where
   field
     ⦃ closed ⦄ : Closed _↝_ _⇒_
     ⦃ cart ⦄ : Cartesian _↝_ _×_
@@ -218,55 +223,62 @@ instance
      
 record Monoid { A : Set } (∅ : A) (_∪_ : A → A → A) : Set where
   field
-    .id-l  : ∀ {a : A} → ∅ ∪ a ≡ a
-    .id-r  : ∀ {a : A} → a ∪ ∅ ≡ a
-    .assoc : ∀ {a b c : A} → (a ∪ b) ∪ c ≡ a ∪ (b ∪ c)
+    .idˡ  : ∀ (a : A) → ∅ ∪ a ≡ a
+    .idʳ  : ∀ (a : A) → a ∪ ∅ ≡ a
+    .assoc : ∀ (a b c : A) → (a ∪ b) ∪ c ≡ a ∪ (b ∪ c)
 open Monoid ⦃ … ⦄ public
 
-+zero : ∀ {m : ℕ} → m +ℕ 0 ≡ m
-+zero {zero} = refl
-+zero {suc m} rewrite (+zero {m}) = refl
-{-# REWRITE +zero #-}
-
-+-assoc : ∀ { m n p : ℕ } → (m +ℕ n) +ℕ p ≡ m +ℕ (n +ℕ p)
-+-assoc {zero } {n} {p} = refl
-+-assoc {suc m} {n} {p} rewrite +-assoc {m} {n} {p} = refl
+-- I'm using explicit parameters here to make Data.Nat.Properties convenient.
 
 instance
-  Monoidℕ : Monoid zero _+ℕ_
-  Monoidℕ = record {
-    id-l = refl ;
-    id-r = refl ;
-    assoc = λ { {a} {b} {c} → +-assoc {a} {b} {c} }
+  Monoid+ℕ : Monoid 0 _+ℕ_
+  Monoid+ℕ = record {
+    idˡ = +-identityˡ ;
+    idʳ = +-identityʳ ;
+    assoc = +-assoc
+    }
+
+instance
+  Monoid*ℕ : Monoid 1 _*ℕ_
+  Monoid*ℕ = record {
+    idˡ = *-identityˡ ;
+    idʳ = *-identityʳ ;
+    assoc = *-assoc
     }
          
 record CommutativeMonoid { A : Set } (∅ : A) (_∪_ : A → A → A) : Set where
   field
     ⦃ _Monoid ⦄ : Monoid ∅ _∪_
-    .comm : ∀ {a b : A} → (a ∪ b) ≡ (b ∪ a)
+    .comm : ∀ (a b : A) → (a ∪ b) ≡ (b ∪ a)
 open CommutativeMonoid ⦃ … ⦄ public
 
-+-suc : ∀ {m n : ℕ} → m +ℕ suc n ≡ suc (m +ℕ n)
-+-suc {zero} {n} = refl
-+-suc {suc m} {n} rewrite +-suc {m} {n} = refl
-
-+-comm : ∀ { m n : ℕ } → m +ℕ n ≡ n +ℕ m
-+-comm {m} {zero }  = +zero {m}
-+-comm {m} {suc n} rewrite +-suc {m} {n} | +-comm {n} {m} = refl
-
 instance
-  CommutativeMonoidℕ : CommutativeMonoid zero _+ℕ_
-  CommutativeMonoidℕ = record {
-    comm = λ { {a} {b} → +-comm {a} {b} } }
+  CommutativeMonoid+ℕ : CommutativeMonoid 0 _+ℕ_
+  CommutativeMonoid+ℕ = record { comm = +-comm }
 
-record Semiring { A : Set } : Set where
+record Semiring (A : Set) : Set where
   field
     𝟎 𝟏 : A
     _+_ _*_ : A → A → A
     ⦃ _add ⦄ : CommutativeMonoid 𝟎 _+_
     ⦃ _mul ⦄ : Monoid 𝟏 _*_
-    .distrib-l : {a b c : A} → a * (b + c) ≡ (a * b) + (a * c)
-    .distrib-r : {a b c : A} → (a + b) * c ≡ (a * c) + (b * c)
-    .annihilate-l : {a : A} → 𝟎 * a ≡ 𝟎
-    .annihilate-r : {a : A} → a * 𝟎 ≡ 𝟎
+    .distribˡ : (a b c : A) → a * (b + c) ≡ (a * b) + (a * c)
+    .distribʳ : (a b c : A) → (b + c) * a ≡ (b * a) + (c * a)
+    .annihilateˡ : (a : A) → 𝟎 * a ≡ 𝟎
+    .annihilateʳ : (a : A) → a * 𝟎 ≡ 𝟎
 open Semiring ⦃ … ⦄ public
+
+instance
+  Semiringℕ : Semiring ℕ
+  Semiringℕ = record
+    { 𝟎 = 0
+    ; 𝟏 = 1
+    ; _+_ = _+ℕ_
+    ; _*_ = _*ℕ_
+    ; distribˡ = *-distribˡ-+
+    ; distribʳ = *-distribʳ-+
+    ; annihilateˡ = {!!}
+    ; annihilateʳ = {!!}
+    }
+
+-- TODO: Use Monoid and Semiring from Algebra.Structures in Agda's standard library.
