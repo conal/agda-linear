@@ -58,12 +58,13 @@ instance
     assoc = refl }
 
 record Monoidal _↝_ (_◇_ : Op₂ u) : Set where
+  infixr 2 _⊙_
   field
     ⦃ cat ⦄ : Category _↝_
     _⊙_ : (A ↝ C) → (B ↝ D) → ((A ◇ B) ↝ (C ◇ D))
 open Monoidal ⦃ … ⦄ public
 
--- Is there a way to declare fixity of locally defined operators like × and ⊙?
+-- Is there a way to declare fixity of parameters like × and ⊙?
 
 first : ⦃ _ : Monoidal _↝_ _◇_ ⦄ -> (A ↝ C) -> ((A ◇ B) ↝ (C ◇ B))
 first f = f ⊙ id
