@@ -5,3 +5,6 @@ Motivation for this change includes getting full checking of homomorphisms (line
 
 The classes in `Category.agda` are adapted from [calculating-compilers-agda](https://github.com/conal/calculating-compilers-agda).
 
+Early work in progress by Agda newbies.
+Comments most welcome!
+
