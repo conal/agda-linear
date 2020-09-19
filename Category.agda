@@ -1,29 +1,14 @@
-{-# OPTIONS --type-in-type --rewriting #-}
-
-open import Relation.Binary using (Rel)
+open import Level
 
 module Category where
 
+open import Relation.Binary using (Rel)
 open import Algebra using (Op₂)
-open import Data.Product renaming
-      (swap to swap×; _×_ to _×→_; curry to curry→; uncurry to uncurry→)
-open import Data.Sum renaming (swap to swap⊎; _⊎_ to _⊎→_)
-open import Data.Unit
-open import Function renaming (_∘_ to _∘→_; id to id→)
-open import Data.Nat renaming (_+_ to _+ℕ_; _*_ to _*ℕ_)
-open import Data.Nat.Properties
-open import Algebra.Definitions using (_DistributesOverˡ_; _DistributesOverʳ_)
-
-open import Relation.Binary.PropositionalEquality as PE hiding ([_])
-open PE.≡-Reasoning
-open import Agda.Builtin.Equality.Rewrite
-open import Level
 
 -- TODO: add levels, and remove --type-in-type.
 
--- Probably defined somewhere in the standard library. Maybe Rel (with level)
-Arr : Set → Set
-Arr u = u → u → Set
+Arr : Set → Set₁
+Arr A = Rel A 0ℓ
 
 private
   variable
@@ -32,11 +17,12 @@ private
    _↝_ : u → u → Set
    _◇_ _×_ _⊎_ _⇨_ : Op₂ u
 
-record Category (_↝_ : Arr u) : Set where
+record Category (_↝_ : Arr u) : Set₁ where
   infix 4 _≈_
   infixr 9 _∘_
   field
-    _≈_  : ∀ {A B : u} → Rel (A ↝ B) 0ℓ
+    _≈_  : Arr (A ↝ B)
+           -- Rel (A ↝ B) 0ℓ
     id   : A ↝ A
     _∘_  : (B ↝ C) → (A ↝ B) → (A ↝ C)
     .idˡ  : ∀ {f : A ↝ B} → id ∘ f ≈ f
@@ -44,20 +30,7 @@ record Category (_↝_ : Arr u) : Set where
     .assoc : ∀ {h : C ↝ D} {g : B ↝ C} {f : A ↝ B} → (h ∘ g) ∘ f ≈ h ∘ (g ∘ f)
 open Category ⦃ … ⦄ public
 
-Fun : Set → Set → Set
-Fun = λ (A B : Set) → A → B
-
-instance
-  →-Category : Category Fun
-  →-Category = record {
-    _≈_ = _≡_ ;
-    id = id→ ;
-    _∘_ = _∘′_ ;
-    idˡ = refl ;
-    idʳ = refl ;
-    assoc = refl }
-
-record Monoidal _↝_ (_◇_ : Op₂ u) : Set where
+record Monoidal _↝_ (_◇_ : Op₂ u) : Set₁ where
   infixr 2 _⊙_
   field
     ⦃ cat ⦄ : Category _↝_
@@ -72,17 +45,7 @@ first f = f ⊙ id
 second : ⦃ _ : Monoidal _↝_ _◇_ ⦄ -> (B ↝ D) -> ((A ◇ B) ↝ (A ◇ D))
 second f = id ⊙ f
 
-instance
-  →-Monoidal× : Monoidal Fun (_×→_)
-  →-Monoidal× = record {
-    _⊙_ = λ { f g (a , b) → (f a , g b) } }
-
-instance
-  →-Monoidal⊎ : Monoidal Fun (_⊎→_)
-  →-Monoidal⊎ = record {
-    _⊙_ = λ { f g → (λ { (inj₁ a) → inj₁ (f a) ; (inj₂ b) → inj₂ (g b) }) } }
-
-record Cartesian _↝_ (_×_ : Op₂ u) : Set where
+record Cartesian _↝_ (_×_ : Op₂ u) : Set₁ where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _×_
     exl : (A × B) ↝ A
@@ -96,14 +59,7 @@ infixr 3 _△_
 _△_ : ⦃ _ : Cartesian _↝_ _×_ ⦄ → (A ↝ C) → (A ↝ D) → (A ↝ (C × D))
 f △ g = (f ⊙ g) ∘ dup
 
-instance
-  →-Cartesian : Cartesian Fun _×→_
-  →-Cartesian = record {
-    exl = proj₁ ;
-    exr = proj₂ ;
-    dup = λ a → (a , a) }
-
-record Cocartesian _↝_ (_⊎_ : Op₂ u) : Set where
+record Cocartesian _↝_ (_⊎_ : Op₂ u) : Set₁ where
   field
     ⦃ _↝_ComonoidalP ⦄ : Monoidal _↝_ _⊎_
     inl : A ↝ (A ⊎ B)
@@ -115,15 +71,7 @@ infixr 2 _▽_
 _▽_ : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → (A ↝ C) → (B ↝ C) → ((A ⊎ B) ↝ C)
 f ▽ g = jam ∘ (f ⊙ g)
 
-instance
-  →-Cocartesian : Cocartesian Fun _⊎→_
-  →-Cocartesian = record {
-    inl = inj₁ ;
-    inr = inj₂ ;
-    jam = λ { (inj₁ a) → a ; (inj₂ a) → a }
-   }
-
-record Associative (_↝_ : Arr u) _◇_ : Set where
+record Associative (_↝_ : Arr u) _◇_ : Set₁ where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     rassoc : ((A ◇ B) ◇ C) ↝ (A ◇ (B ◇ C))
@@ -135,20 +83,12 @@ AssocViaCart = record {
   lassoc = second exl △ exr ∘ exr ;
   rassoc = exl ∘ exl △ first exr }
 
-instance
-  →-Associative× : Associative Fun _×→_
-  →-Associative× = AssocViaCart
-
 AssocViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Associative _↝_ _⊎_
 AssocViaCocart = record {
   lassoc = inl ∘ inl ▽ (inl ∘ inr ▽ inr) ;
   rassoc = (inl ▽ inr ∘ inl) ▽ inr ∘ inr }
 
-instance
-  →-Associative⊎ : Associative Fun _⊎→_
-  →-Associative⊎ = AssocViaCocart
-
-record Braided (_↝_ : Arr u) _◇_ : Set where
+record Braided (_↝_ : Arr u) _◇_ : Set₁ where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     swap : {A B : u} → (A ◇ B) ↝ (B ◇ A)
@@ -160,49 +100,25 @@ BraidedViaCart = record { swap = exr △ exl }
 BraidedViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Braided _↝_ _⊎_
 BraidedViaCocart = record { swap = inr ▽ inl }
 
-instance
-  →-Braided× : Braided Fun _×→_
-  →-Braided× = BraidedViaCart
-
-instance
-  →-Braided⊎ : Braided Fun _⊎→_
-  →-Braided⊎ = BraidedViaCocart
-
-record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
+record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set₁ where
   field
     ⦃ _↝_Braided ⦄ : Braided _↝_ _◇_
     swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≈ id
 open Symmetric ⦃ … ⦄ public
 
-instance
-  →-Symmetric× : Symmetric Fun _×→_
-  →-Symmetric× = record { swap∘swap = refl }
-
--- TODO:
--- 
--- instance
---   →-Symmetric⊎ : Symmetric Fun _⊎→_
---   →-Symmetric⊎ = {!!}
-
--- Use swap-involutive from the standard library from Data.Sum.Properties
-
-record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set where
+record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set₁ where
   field
     ⦃ _↝_Cartesian ⦄ : Cartesian _↝_ _◇_
     ⦃ _↝_Cocartesian ⦄ : Cocartesian _↝_ _◇_
 open Biproduct ⦃ … ⦄ public
 
-record Closed _↝_ (_⇨_ : Op₂ u) : Set where
+record Closed _↝_ (_⇨_ : Op₂ u) : Set₁ where
   field
     ⦃ cat ⦄ : Category _↝_
     _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇨ C) ↝ (A ⇨ D))
 open Closed ⦃ … ⦄ public
 
-instance
-  →-Closed : Closed Fun Fun
-  →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
-
-record CartesianClosed _↝_ _×_ (_⇨_ : Op₂ u) : Set where
+record CartesianClosed _↝_ _×_ (_⇨_ : Op₂ u) : Set₁ where
   field
     ⦃ closed ⦄ : Closed _↝_ _⇨_
     ⦃ cart ⦄ : Cartesian _↝_ _×_
@@ -218,12 +134,3 @@ open CartesianClosed ⦃ … ⦄ public
 -- How can I ensure that they're the same?
 
 -- TODO: decide whether to keep apply.
-
-instance
-  →-CartesianClosed : CartesianClosed Fun _×→_ Fun
-  →-CartesianClosed = record {
-      curry = curry→ ;
-      uncurry = uncurry→ ;
-      apply = λ { (f , x) → f x }
-      -- apply = applyViaUncurry
-      }
