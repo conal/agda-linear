@@ -1,27 +1,27 @@
 open import Level
 
-module Category where
+module Category (ℓ : Level) where
 
 open import Relation.Binary using (Rel)
 open import Algebra using (Op₂)
 
--- TODO: add levels, and remove --type-in-type.
-
-Arr : Set → Set₁
-Arr A = Rel A 0ℓ
+-- Arrow/morphism
+Arr : Set ℓ → Set (suc zero ⊔ ℓ)
+Arr A = A → A → Set
 
 private
   variable
-   u : Set
+   u : Set ℓ
    A B C D U V Z : u
    _↝_ : u → u → Set
    _◇_ _×_ _⊎_ _⇨_ : Op₂ u
 
-record Category (_↝_ : Arr u) : Set₁ where
+record Category (_↝_ : Arr u) : Set (suc ℓ) where
   infix 4 _≈_
   infixr 9 _∘_
   field
-    _≈_  : Arr (A ↝ B)
+    _≈_  : (A ↝ B) → (A ↝ B) → Set
+           -- Arr (A ↝ B)
            -- Rel (A ↝ B) 0ℓ
     id   : A ↝ A
     _∘_  : (B ↝ C) → (A ↝ B) → (A ↝ C)
@@ -30,7 +30,7 @@ record Category (_↝_ : Arr u) : Set₁ where
     .assoc : ∀ {h : C ↝ D} {g : B ↝ C} {f : A ↝ B} → (h ∘ g) ∘ f ≈ h ∘ (g ∘ f)
 open Category ⦃ … ⦄ public
 
-record Monoidal _↝_ (_◇_ : Op₂ u) : Set₁ where
+record Monoidal _↝_ (_◇_ : Op₂ u) : Set (suc ℓ) where
   infixr 2 _⊙_
   field
     ⦃ cat ⦄ : Category _↝_
@@ -39,13 +39,13 @@ open Monoidal ⦃ … ⦄ public
 
 -- Is there a way to declare fixity of parameters like × and ⊙?
 
-first : ⦃ _ : Monoidal _↝_ _◇_ ⦄ -> (A ↝ C) -> ((A ◇ B) ↝ (C ◇ B))
+first : ⦃ _ : Monoidal _↝_ _◇_ ⦄ → (A ↝ C) → ((A ◇ B) ↝ (C ◇ B))
 first f = f ⊙ id
 
-second : ⦃ _ : Monoidal _↝_ _◇_ ⦄ -> (B ↝ D) -> ((A ◇ B) ↝ (A ◇ D))
+second : ⦃ _ : Monoidal _↝_ _◇_ ⦄ → (B ↝ D) → ((A ◇ B) ↝ (A ◇ D))
 second f = id ⊙ f
 
-record Cartesian _↝_ (_×_ : Op₂ u) : Set₁ where
+record Cartesian _↝_ (_×_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _×_
     exl : (A × B) ↝ A
@@ -59,7 +59,7 @@ infixr 3 _△_
 _△_ : ⦃ _ : Cartesian _↝_ _×_ ⦄ → (A ↝ C) → (A ↝ D) → (A ↝ (C × D))
 f △ g = (f ⊙ g) ∘ dup
 
-record Cocartesian _↝_ (_⊎_ : Op₂ u) : Set₁ where
+record Cocartesian _↝_ (_⊎_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ _↝_ComonoidalP ⦄ : Monoidal _↝_ _⊎_
     inl : A ↝ (A ⊎ B)
@@ -71,7 +71,7 @@ infixr 2 _▽_
 _▽_ : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → (A ↝ C) → (B ↝ C) → ((A ⊎ B) ↝ C)
 f ▽ g = jam ∘ (f ⊙ g)
 
-record Associative (_↝_ : Arr u) _◇_ : Set₁ where
+record Associative (_↝_ : Arr u) (_◇_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     rassoc : ((A ◇ B) ◇ C) ↝ (A ◇ (B ◇ C))
@@ -79,16 +79,17 @@ record Associative (_↝_ : Arr u) _◇_ : Set₁ where
 open Associative ⦃ … ⦄ public
 
 AssocViaCart : ⦃ _ : Cartesian _↝_ _×_ ⦄ → Associative _↝_ _×_
-AssocViaCart = record {
-  lassoc = second exl △ exr ∘ exr ;
-  rassoc = exl ∘ exl △ first exr }
+AssocViaCart = record
+  { lassoc = second exl △ exr ∘ exr
+  ; rassoc = exl ∘ exl △ first exr }
 
 AssocViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Associative _↝_ _⊎_
-AssocViaCocart = record {
-  lassoc = inl ∘ inl ▽ (inl ∘ inr ▽ inr) ;
-  rassoc = (inl ▽ inr ∘ inl) ▽ inr ∘ inr }
+AssocViaCocart = record
+  { lassoc = inl ∘ inl ▽ (inl ∘ inr ▽ inr)
+  ; rassoc = (inl ▽ inr ∘ inl) ▽ inr ∘ inr
+  }
 
-record Braided (_↝_ : Arr u) _◇_ : Set₁ where
+record Braided (_↝_ : Arr u) _◇_ : Set (suc ℓ) where
   field
     ⦃ _↝_Monoidal ⦄ : Monoidal _↝_ _◇_
     swap : {A B : u} → (A ◇ B) ↝ (B ◇ A)
@@ -100,25 +101,25 @@ BraidedViaCart = record { swap = exr △ exl }
 BraidedViaCocart : ⦃ _ : Cocartesian _↝_ _⊎_ ⦄ → Braided _↝_ _⊎_
 BraidedViaCocart = record { swap = inr ▽ inl }
 
-record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set₁ where
+record Symmetric (_↝_ : Arr u) (_◇_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ _↝_Braided ⦄ : Braided _↝_ _◇_
-    swap∘swap : {A B : u} → swap {A = B} {B = A} ∘ swap {A = A} {B = B} ≈ id
+    swap∘swap : {A B : u} → swap ∘ swap {A = A} {B = B} ≈ id
 open Symmetric ⦃ … ⦄ public
 
-record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set₁ where
+record Biproduct (_↝_ : Arr u) (_◇_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ _↝_Cartesian ⦄ : Cartesian _↝_ _◇_
     ⦃ _↝_Cocartesian ⦄ : Cocartesian _↝_ _◇_
 open Biproduct ⦃ … ⦄ public
 
-record Closed _↝_ (_⇨_ : Op₂ u) : Set₁ where
+record Closed _↝_ (_⇨_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ cat ⦄ : Category _↝_
     _⇓_ : (A ↝ B) → (C ↝ D) → ((B ⇨ C) ↝ (A ⇨ D))
 open Closed ⦃ … ⦄ public
 
-record CartesianClosed _↝_ _×_ (_⇨_ : Op₂ u) : Set₁ where
+record CartesianClosed _↝_ _×_ (_⇨_ : Op₂ u) : Set (suc ℓ) where
   field
     ⦃ closed ⦄ : Closed _↝_ _⇨_
     ⦃ cart ⦄ : Cartesian _↝_ _×_

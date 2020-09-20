@@ -1,4 +1,4 @@
-{-# OPTIONS --type-in-type --rewriting #-}
+{-# OPTIONS --rewriting #-}
 {-# OPTIONS --irrelevant-projections #-}
 
 -- Functions as a category
@@ -7,7 +7,7 @@ module Fun where
 
 open import Level
 
-open import Category
+open import Category (suc 0ℓ)
 
 open import Relation.Binary.PropositionalEquality as PE hiding ([_])
 open PE.≡-Reasoning
@@ -15,83 +15,101 @@ open PE.≡-Reasoning
 open import Data.Product renaming
       (swap to swap×; _×_ to _×→_; curry to curry→; uncurry to uncurry→)
 open import Data.Sum renaming (swap to swap⊎; _⊎_ to _⊎→_)
+open import Data.Sum.Properties using (swap-involutive)
 open import Function renaming (_∘_ to _∘→_; id to id→)
 
-Fun : Set → Set → Set
-Fun = λ (A B : Set) → A → B
+-- Agda doesn't like "_→_".
+_↦_ : Set → Set → Set
+A ↦ B = A → B
+
+-- Extensional equality for use in Category _↦_.
+-- Used by swap⊎-involutive.
+infix 4 _≡→_
+_≡→_ : ∀ {A B : Set} → (A → B) → (A → B) → Set
+f ≡→ g = ∀ x → f x ≡ g x
+
+refl→ : ∀ {A B : Set} → {f : A → B} → f ≡→ f
+refl→ _ = refl
+
+-- TODO: use _≗_ from Relation.Binary.PropositionalEquality?
 
 instance
-  →-Category : Category Fun
-  →-Category = record {
-    _≈_ = _≡_ ;
-    id = id→ ;
-    _∘_ = _∘′_ ;
-    idˡ = refl ;
-    idʳ = refl ;
-    assoc = refl }
+  →-Category : Category _↦_
+  →-Category = record
+    { _≈_ =  _≡→_
+    ; id = id→
+    ; _∘_ = _∘′_
+    ; idˡ = refl→
+    ; idʳ = refl→
+    ; assoc = refl→ }
 
 instance
-  →-Monoidal× : Monoidal Fun (_×→_)
-  →-Monoidal× = record {
-    _⊙_ = λ { f g (a , b) → (f a , g b) } }
+  →-Monoidal× : Monoidal _↦_ (_×→_)
+  →-Monoidal× = record {_⊙_ = λ { f g (a , b) → (f a , g b) } }
 
 instance
-  →-Monoidal⊎ : Monoidal Fun (_⊎→_)
+  →-Monoidal⊎ : Monoidal _↦_ (_⊎→_)
   →-Monoidal⊎ = record {
-    _⊙_ = λ { f g → (λ { (inj₁ a) → inj₁ (f a) ; (inj₂ b) → inj₂ (g b) }) } }
+    _⊙_ = λ { f g → (λ { (inj₁ a) → inj₁ (f a) ; (inj₂ b) → inj₂ (g b) }) }
+    }
 
 instance
-  →-Cartesian : Cartesian Fun _×→_
-  →-Cartesian = record {
-    exl = proj₁ ;
-    exr = proj₂ ;
-    dup = λ a → (a , a) }
+  →-Cartesian : Cartesian _↦_ _×→_
+  →-Cartesian = record
+    { exl = proj₁
+    ; exr = proj₂
+    ; dup = λ a → (a , a)
+    }
 
 instance
-  →-Cocartesian : Cocartesian Fun _⊎→_
-  →-Cocartesian = record {
-    inl = inj₁ ;
-    inr = inj₂ ;
-    jam = λ { (inj₁ a) → a ; (inj₂ a) → a }
-   }
+  →-Cocartesian : Cocartesian _↦_ _⊎→_
+  →-Cocartesian = record
+    { inl = inj₁
+    ; inr = inj₂
+    ; jam = λ { (inj₁ a) → a ; (inj₂ a) → a }
+    }
 
 instance
-  →-Associative× : Associative Fun _×→_
+  →-Associative× : Associative _↦_ _×→_
   →-Associative× = AssocViaCart
 
 instance
-  →-Associative⊎ : Associative Fun _⊎→_
+  →-Associative⊎ : Associative _↦_ _⊎→_
   →-Associative⊎ = AssocViaCocart
 
 instance
-  →-Braided× : Braided Fun _×→_
-  →-Braided× = BraidedViaCart
+  →-Braided× : Braided _↦_ _×→_
+  -- →-Braided× = BraidedViaCart
+  →-Braided× = record { swap = swap× }
 
 instance
-  →-Braided⊎ : Braided Fun _⊎→_
-  →-Braided⊎ = BraidedViaCocart
+  →-Braided⊎ : Braided _↦_ _⊎→_
+  -- →-Braided⊎ = BraidedViaCocart
+  →-Braided⊎ = record { swap = swap⊎ }
 
 instance
-  →-Symmetric× : Symmetric Fun _×→_
-  →-Symmetric× = record { swap∘swap = refl }
+  →-Symmetric× : Symmetric _↦_ _×→_
+  →-Symmetric× = record { swap∘swap = refl→ }
 
--- TODO:
--- 
--- instance
---   →-Symmetric⊎ : Symmetric Fun _⊎→_
---   →-Symmetric⊎ = {!!}
-
--- Use swap-involutive from the standard library from Data.Sum.Properties
+swap⊎-involutive : ∀ {A B : Set} → swap⊎ ∘ swap⊎ {A = A} {B = B} ≡→ id
+swap⊎-involutive (inj₁ _) = refl
+swap⊎-involutive (inj₂ _) = refl
 
 instance
-  →-Closed : Closed Fun Fun
+  →-Symmetric⊎ : Symmetric _↦_ _⊎→_
+  →-Symmetric⊎ = record { swap∘swap = swap⊎-involutive }
+
+instance
+  →-Closed : Closed _↦_ _↦_
   →-Closed = record { _⇓_ = λ { f h g → h ∘ g ∘ f } }
 
 instance
-  →-CartesianClosed : CartesianClosed Fun _×→_ Fun
-  →-CartesianClosed = record {
-      curry = curry→ ;
-      uncurry = uncurry→ ;
-      apply = λ { (f , x) → f x }
-      -- apply = applyViaUncurry
+  →-CartesianClosed : CartesianClosed _↦_ _×→_ _↦_
+  →-CartesianClosed = record
+      { curry = curry→
+      ; uncurry = uncurry→
+      ; apply = λ { (f , x) → f x }
+      -- ; apply = applyViaUncurry
       }
+
+
