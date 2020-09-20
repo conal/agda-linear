@@ -18,6 +18,10 @@ open import Data.Sum renaming (swap to swap⊎; _⊎_ to _⊎→_)
 open import Data.Sum.Properties using (swap-involutive)
 open import Function renaming (_∘_ to _∘→_; id to id→)
 
+private
+  variable
+    A B : Set
+
 -- Agda doesn't like "_→_".
 _↦_ : Set → Set → Set
 A ↦ B = A → B
@@ -25,10 +29,10 @@ A ↦ B = A → B
 -- Extensional equality for use in Category _↦_.
 -- Used by swap⊎-involutive.
 infix 4 _≡→_
-_≡→_ : ∀ {A B : Set} → (A → B) → (A → B) → Set
+_≡→_ : (A → B) → (A → B) → Set
 f ≡→ g = ∀ x → f x ≡ g x
 
-refl→ : ∀ {A B : Set} → {f : A → B} → f ≡→ f
+refl→ : {f : A → B} → f ≡→ f
 refl→ _ = refl
 
 -- TODO: use _≗_ from Relation.Binary.PropositionalEquality?
@@ -91,7 +95,7 @@ instance
   →-Symmetric× : Symmetric _↦_ _×→_
   →-Symmetric× = record { swap∘swap = refl→ }
 
-swap⊎-involutive : ∀ {A B : Set} → swap⊎ ∘ swap⊎ {A = A} {B = B} ≡→ id
+swap⊎-involutive : swap⊎ ∘ swap⊎ {A = A} {B = B} ≡→ id
 swap⊎-involutive (inj₁ _) = refl
 swap⊎-involutive (inj₂ _) = refl
 
