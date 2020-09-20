@@ -1,6 +1,3 @@
-{-# OPTIONS --rewriting #-}
-{-# OPTIONS --irrelevant-projections #-}
-
 -- Functions as a category
 
 module Fun where
@@ -34,8 +31,6 @@ f ≡→ g = ∀ x → f x ≡ g x
 
 refl→ : {f : A → B} → f ≡→ f
 refl→ _ = refl
-
--- TODO: use _≗_ from Relation.Binary.PropositionalEquality?
 
 instance
   →-Category : Category _↦_
